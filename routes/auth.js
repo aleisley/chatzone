@@ -3,11 +3,11 @@ const router = express.Router()
 const bcrypt = require('bcrypt')
 const saltRounds = 10
 const jwt = require('jsonwebtoken')
-const mongoose = require('mongoose')
 
 const keys = require('../config/keys')
-const verify = require('../utilities/verify-token')
 const validateRegisterInput = require('../validation/register')
+const validateLoginInput = require('../validation/login')
+
 const User = require('../models/User')
 
 router.post('/register', (req, res) => {
@@ -58,6 +58,48 @@ router.post('/register', (req, res) => {
           .catch(err => console.log(err))
       })
     }
+  })
+})
+
+router.post('/login', (req, res) => {
+  const { errors, isValid } = validateLoginInput(req.body)
+  if (!isValid) return res.status(400).json(errors)
+
+  const username = req.body.username
+  const password = req.body.password
+
+  User.findOne({ username }).then(user => {
+    if (!user) return res.status(404).json({ username: 'Username not found' })
+
+    bcrypt.compare(password, user.password)
+      .then(isMatch => {
+        if (isMatch) {
+          const payload = {
+            id: user.id,
+            name: user.name
+          }
+
+          const cb = (err, token) => {
+            res.json({
+              success: true,
+              token: 'Bearer ' + token,
+              name: user.name,
+              username: user.username
+            })
+          }
+
+          jwt.sign(
+            payload,
+            keys.secretOrKey,
+            {
+              expiresIn: 31556926, // 1 year in seconds
+            },
+            cb
+          )
+        } else {
+          return res.status(401).json({ loginError: 'Credentials incorrect' })
+        }
+      })
   })
 })
 
