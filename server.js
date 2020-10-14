@@ -5,6 +5,7 @@ const passport = require('passport')
 const cors = require('cors')
 
 const auth = require('./routes/auth')
+const users = require('./routes/users')
 
 const app = express()
 
@@ -48,3 +49,4 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/', auth)
+app.use('/api/v1/users', users)
