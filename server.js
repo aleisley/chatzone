@@ -17,7 +17,17 @@ const server = app.listen(port, () => {
   console.log(`Server running on port ${port}`)
 })
 
-const io = require('socket.io').listen(server)
+const io = require('socket.io')(server, {
+  handlePreflightRequest: (req, res) => {
+    const headers = {
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Origin": req.headers.origin, //or the specific origin you want to give access to,
+      "Access-Control-Allow-Credentials": true
+    };
+    res.writeHead(200, headers);
+    res.end();
+  }
+})
 
 // Body Parser middleware to parse request bodies
 app.use(
@@ -27,7 +37,21 @@ app.use(
 )
 app.use(bodyParser.json())
 
+// const whitelist = ['*']
+// const corsOptions = {
+//   origin: (origin, callback) => {
+//     if (whitelist.indexOf(origin) !== -1) {
+//       callback(null, true)
+//     } else if (whitelist.indexOf('*') !== -1) {
+//       callback(null, true)
+//     } else {
+//       callback(new Error('Not allowed by CORS'))
+//     }
+//   }
+// }
+
 // CORS middleware
+// app.use(cors(corsOptions))
 app.use(cors())
 
 // Database configuration
